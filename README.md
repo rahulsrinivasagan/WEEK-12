@@ -1,35 +1,96 @@
-# 🚀 Week 13 Task Manager Monorepo
+# 🚀 Task Manager Monorepo (Week 14 — CI/CD & Deployment)
 
-> A high-performance, full-stack Task Management application built with **Next.js**, **Supabase**, **TypeScript**, **Zod**, **Tailwind CSS**, **pnpm Workspaces**, and **TurboRepo**.
+[![CI](https://github.com/<OWNER>/<REPOSITORY>/actions/workflows/ci.yml/badge.svg)](https://github.com/<OWNER>/<REPOSITORY>/actions/workflows/ci.yml)
 
----
-
-## 📌 Project Overview
-
-In **Week 12**, we developed a production-ready Task Manager featuring Supabase authentication, Server Actions, Zod validation, Row-Level Security (RLS), and a sleek modern UI with dark mode support.
-
-For **Week 13**, the project was refactored and migrated into an enterprise-grade **Monorepo Architecture**. The application is now organized into modular applications (`apps/`) and reusable shared packages (`packages/`), orchestrated via **TurboRepo** and **pnpm Workspaces**.
+> A high-performance, full-stack Task Management application built with **Next.js 15**, **Supabase**, **TypeScript**, **Zod**, **Tailwind CSS**, **pnpm Workspaces**, **TurboRepo**, **GitHub Actions CI**, and **Vercel Deployment Readiness**.
 
 ---
 
-## 💡 Why Monorepo?
+## 📌 Project Overview & Evolution
 
-Migrating from a standalone application to a monorepo provides crucial benefits for scalability and team collaboration:
+* **Week 12**: Built a production-ready Task Manager featuring Supabase authentication, Server Actions, Zod validation, Row-Level Security (RLS), and a sleek modern UI with dark mode.
+* **Week 13**: Refactored the architecture into an enterprise-grade **Monorepo** using **pnpm Workspaces** and **TurboRepo**, extracting shared schemas and types into `@repo/common-types`.
+* **Week 14**: Implemented an automated **GitHub Actions CI/CD Pipeline**, code quality gates, Pull Request validation, and pre-configured **Vercel Monorepo Deployment**.
 
-1. **Shared Code & Single Source of Truth**: Reusable validation schemas and TypeScript types (like `taskSchema` and `Task`) live in `@repo/common-types` and are shared seamlessly across multiple frontends, backend services, or mobile apps without code duplication.
-2. **Atomic Commits & Refactoring**: Update schemas, types, and consuming applications simultaneously in a single pull request with complete confidence.
-3. **Optimized Build Pipelines**: TurboRepo provides intelligent caching, parallel execution, and topological dependency resolution, drastically reducing build and test times.
-4. **Centralized Dependency Management**: Manage dependencies consistently with `pnpm` workspaces, preventing version drift and reducing disk footprint via hard links.
-5. **Streamlined Developer Workflow**: Run development servers, linters, and type checkers across all applications and packages with unified root commands.
+---
+
+## 🔄 CI/CD Pipeline (GitHub Actions)
+
+An automated Continuous Integration (CI) pipeline runs on every **Pull Request targeting `main`** and on direct pushes to `main`.
+
+### Pipeline Flow
+
+```text
+       Pull Request / Push to main
+                   ↓
+   [GitHub Actions Workflow: CI]
+                   ↓
+      1. Checkout Repository
+                   ↓
+      2. Setup pnpm (v11.9.0)
+                   ↓
+      3. Setup Node.js (v20 LTS) & Cache
+                   ↓
+      4. Install Monorepo Dependencies
+         (pnpm install --frozen-lockfile)
+                   ↓
+      5. Run ESLint (pnpm lint)
+                   ↓
+      6. Run TypeScript Checks (pnpm typecheck)
+                   ↓
+      7. Run Production Build (pnpm build)
+                   ↓
+          ✅ CI Checks Pass
+```
+
+### Security & Zero-Secret CI Policy
+* The CI pipeline verifies linting, type safety, and production build without requiring live Supabase credentials.
+* No `.env` or `.env.local` files or production secrets are committed or exposed in CI logs.
+
+---
+
+## 🌐 Vercel Deployment Configuration
+
+The monorepo is fully prepared for instant deployment on [Vercel](https://vercel.com/):
+
+### Recommended Vercel Project Settings
+
+| Setting | Value |
+| :--- | :--- |
+| **Framework Preset** | `Next.js` |
+| **Root Directory** | `apps/web` |
+| **Build Command** | `cd ../.. && pnpm build --filter=web...` *(or default `pnpm build`)* |
+| **Install Command** | `pnpm install` |
+| **Output Directory** | `.next` *(automatically detected)* |
+| **Node.js Version** | `20.x` |
+
+### Required Environment Variables in Vercel
+Add the following under **Project Settings > Environment Variables**:
+
+| Variable Name | Description | Example |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase Project URL | `https://xyzproject.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase Anonymous Public API Key | `eyJhbGciOi...` |
+| `NEXT_PUBLIC_SITE_URL` | Production website URL (for auth redirects) | `https://your-domain.vercel.app` |
+
+### Step-by-Step Vercel Deployment
+1. Push your monorepo to your GitHub repository.
+2. Log into [Vercel Dashboard](https://vercel.com/dashboard) and click **"Add New..." > "Project"**.
+3. Import your GitHub repository.
+4. Set **Root Directory** to `apps/web`.
+5. Under **Environment Variables**, enter `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+6. Click **Deploy**. Vercel will install workspace dependencies, link `@repo/common-types`, and deploy the application.
 
 ---
 
 ## 🏗️ Architecture & Project Structure
 
-The repository follows a clean, modular structure:
-
 ```text
 task-manager-monorepo/
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml                      # GitHub Actions CI pipeline configuration
 │
 ├── apps/
 │   └── web/                            # Next.js 15 Web Application
@@ -59,12 +120,12 @@ task-manager-monorepo/
 │       │   │   └── task.ts             # Zod validation schema (taskSchema)
 │       │   ├── types/
 │       │   │   └── task.ts             # TypeScript interfaces (Task, CreateTaskInput, etc.)
-│       │   └── index.ts                # Public exports
-│       ├── package.json                # Package manifest
+│       │   └── index.ts                # Public barrel exports
+│       ├── package.json                # Package manifest with build, lint, and typecheck scripts
 │       └── tsconfig.json               # Strict TypeScript build configuration
 │
 ├── .env.example                        # Template environment variables
-├── .gitignore                          # Workspace & artifact ignore rules
+├── .gitignore                          # Monorepo gitignore (.turbo, .next, node_modules, .env*)
 ├── package.json                        # Root package.json with TurboRepo commands
 ├── pnpm-workspace.yaml                 # pnpm workspace definition (apps/*, packages/*)
 ├── pnpm-lock.yaml                      # Pinned dependency lockfile
@@ -77,23 +138,24 @@ task-manager-monorepo/
 
 ## 🛠️ Technologies Used
 
-- **Package Management & Workspaces**: [pnpm](https://pnpm.io/)
-- **Monorepo Build System**: [TurboRepo](https://turbo.build/)
-- **Web Framework**: [Next.js 15](https://nextjs.org/) (App Router, Server Actions)
-- **Language**: [TypeScript](https://www.typescriptlang.org/) (Strict Mode)
-- **Schema Validation**: [Zod](https://zod.dev/)
-- **Database & Authentication**: [Supabase](https://supabase.com/) (PostgreSQL + Auth + RLS)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [next-themes](https://github.com/pacocoursey/next-themes) (Dark/Light mode)
-- **Icons**: [Lucide React](https://lucide.dev/)
+* **Package Manager & Workspaces**: [pnpm](https://pnpm.io/)
+* **Build System & Task Orchestrator**: [TurboRepo](https://turbo.build/)
+* **CI/CD**: [GitHub Actions](https://github.com/features/actions)
+* **Deployment Platform**: [Vercel](https://vercel.com/)
+* **Web Framework**: [Next.js 15](https://nextjs.org/) (App Router, Server Actions)
+* **Language**: [TypeScript](https://www.typescriptlang.org/) (Strict Mode)
+* **Schema Validation**: [Zod](https://zod.dev/)
+* **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL + Auth + RLS)
+* **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [next-themes](https://github.com/pacocoursey/next-themes) (Dark/Light mode)
+* **Icons**: [Lucide React](https://lucide.dev/)
 
 ---
 
-## ⚙️ Getting Started
+## ⚙️ Getting Started Locally
 
 ### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18.18+ or v20+)
-- [pnpm](https://pnpm.io/installation) (`npm install -g pnpm`)
+* [Node.js](https://nodejs.org/) (v20+ LTS recommended)
+* [pnpm](https://pnpm.io/installation) (`npm install -g pnpm`)
 
 ### 1. Clone & Install Dependencies
 
@@ -101,11 +163,11 @@ task-manager-monorepo/
 git clone <repository-url>
 cd <project-folder>
 
-# Install all workspace dependencies
+# Install workspace dependencies from the root
 pnpm install
 ```
 
-### 2. Configure Environment Variables
+### 2. Configure Local Environment Variables
 
 Create `.env.local` inside `apps/web/`:
 
@@ -129,77 +191,30 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 Execute the provided SQL schema in your [Supabase SQL Editor](https://supabase.com/dashboard/project/_/sql):
 
 ```sql
--- Creates tasks table with RLS and user ownership policies
 -- See supabase-schema.sql for the complete script
 ```
 
 ---
 
-## 🚀 Development & Build Commands
-
-All commands can be executed from the **monorepo root**:
+## 🚀 Monorepo Root Commands
 
 | Command | Action | Description |
 | :--- | :--- | :--- |
 | `pnpm dev` | `turbo dev` | Runs the Next.js development server with hot reloading |
-| `pnpm build` | `turbo build` | Builds all packages and creates optimized production web bundle |
+| `pnpm build` | `turbo build` | Builds all workspace packages and creates optimized production web bundle |
 | `pnpm lint` | `turbo lint` | Runs ESLint across all workspace apps and packages |
-| `pnpm typecheck` | `turbo typecheck` | Type-checks all packages and Next.js app via `tsc --noEmit` |
+| `pnpm typecheck` | `turbo typecheck` | Validates TypeScript types across all workspaces (`tsc --noEmit`) |
 
 ---
 
-## 📦 Shared Package Usage (`@repo/common-types`)
+## ✨ Preserved Features
 
-The web application consumes `@repo/common-types` via pnpm workspace protocol:
-
-**`apps/web/package.json`**:
-```json
-{
-  "dependencies": {
-    "@repo/common-types": "workspace:*"
-  }
-}
-```
-
-**Using in Server Actions & Client Components**:
-```typescript
-import { taskSchema, type TaskFormValues, type Task } from "@repo/common-types";
-
-// Validate Server Action payload
-const result = taskSchema.safeParse(formData);
-
-// Type client component props
-export function TaskItem({ task }: { task: Task }) { ... }
-```
-
----
-
-## 🌐 Vercel Deployment
-
-The project is fully pre-configured for seamless deployment on [Vercel](https://vercel.com/):
-
-1. Import the repository into Vercel.
-2. In the project settings:
-   - **Root Directory**: Select `apps/web` (or leave root with Vercel's automatic monorepo detection).
-   - **Package Manager**: Select `pnpm`.
-   - **Build Command**: `cd ../.. && pnpm build --filter=web...` (or standard `pnpm build`).
-   - **Output Directory**: `.next`.
-3. Add Environment Variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_SITE_URL` (set to your production Vercel domain)
-4. Deploy!
-
----
-
-## ✨ Features Preserved
-
-- 🔐 **Secure Authentication**: User sign up, email confirmation support, sign in, and secure logout.
-- 🛡️ **Session Protection**: Next.js middleware ensuring protected dashboard access and redirect handling.
-- 📝 **Full Task CRUD**:
-  - Create tasks with client & server-side validation.
-  - Read user-specific tasks (RLS enforced).
-  - Toggle completion status with instant feedback.
-  - Delete tasks with confirmation dialog.
-- ⚡ **Optimistic & Revalidated UI**: Automatic `revalidatePath('/dashboard')` after database mutations.
-- 🌓 **Rich UI & Themes**: Seamless dark and light themes, search filter, sort controls, and responsive layout.
+* 🔐 **Secure Authentication**: User sign up, email confirmation support, sign in, and secure logout.
+* 🛡️ **Session Protection**: Next.js middleware ensuring protected dashboard access and redirect handling.
+* 📝 **Full Task CRUD**:
+  * Create tasks with client & server-side validation.
+  * Read user-specific tasks (RLS enforced).
+  * Toggle completion status with instant feedback.
+  * Delete tasks with confirmation dialog.
+* ⚡ **Optimistic & Revalidated UI**: Automatic `revalidatePath('/dashboard')` after database mutations.
+* 🌓 **Rich UI & Themes**: Seamless dark and light themes, search filter, sort controls, and responsive layout.

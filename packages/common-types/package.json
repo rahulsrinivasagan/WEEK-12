@@ -5,6 +5,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "build": "echo \"Built @repo/common-types\"",
     "typecheck": "tsc --noEmit",
     "lint": "echo \"Linting @repo/common-types\""
   },
