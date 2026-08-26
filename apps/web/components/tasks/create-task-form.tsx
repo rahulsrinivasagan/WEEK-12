@@ -3,7 +3,7 @@
 import React, { useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { taskSchema, type TaskFormValues } from '@/lib/validations'
+import { taskSchema, type TaskFormValues } from '@repo/common-types'
 import { createTask } from '@/actions/task-actions'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'

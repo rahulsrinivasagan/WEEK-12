@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Task } from '@/types'
+import type { Task } from '@repo/common-types'
 import { cn } from '@/lib/utils'
 
 export function TaskItem({ task }: { task: Task }) {

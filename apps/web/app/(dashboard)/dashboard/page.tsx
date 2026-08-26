@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { DashboardClient } from '@/components/tasks/dashboard-client'
-import { Task } from '@/types'
+import type { Task } from '@repo/common-types'
 import { Card, CardContent } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'

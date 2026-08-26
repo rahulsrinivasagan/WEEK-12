@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useTransition } from 'react'
-import { Task } from '@/types'
+import type { Task } from '@repo/common-types'
 import { CreateTaskForm } from './create-task-form'
 import { TaskItem } from './task-item'
 import { ThemeToggle } from '@/components/theme-toggle'

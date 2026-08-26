@@ -1,288 +1,205 @@
-# TaskZen — Premium Full-Stack Task Manager
+# 🚀 Week 13 Task Manager Monorepo
 
-TaskZen is a production-quality, high-performance, and responsive task management application built using **Next.js 15 (App Router)**, **Supabase (Auth & Database)**, **Tailwind CSS**, and **Zod** for server-action validation. It implements full CRUD capabilities, email authentication, interactive glassmorphic cards, metrics tracking, and dark/light modes.
-
-## Table of Contents
-1. [Project Overview](#project-overview)
-2. [Features](#features)
-3. [Tech Stack](#tech-stack)
-4. [Folder Structure](#folder-structure)
-5. [Installation](#installation)
-6. [Supabase Setup](#supabase-setup)
-   - [SQL Schema](#sql-schema)
-   - [Row-Level Security (RLS) Policies](#row-level-security-rls-policies)
-7. [Environment Variables](#environment-variables)
-8. [Running the Project](#running-the-project)
-9. [Deployment](#deployment)
-10. [Future Improvements](#future-improvements)
-11. [Screenshots](#screenshots)
+> A high-performance, full-stack Task Management application built with **Next.js**, **Supabase**, **TypeScript**, **Zod**, **Tailwind CSS**, **pnpm Workspaces**, and **TurboRepo**.
 
 ---
 
-## Project Overview
+## 📌 Project Overview
 
-TaskZen is designed to serve as a fast and secure workspace for managing task priorities. The frontend is built on Next.js 15 with server-side page fetches and Client Component state synchronization. The backend leverages Supabase for fast authentication and data persistence with Row-Level Security (RLS) policies enforcing database security boundaries.
+In **Week 12**, we developed a production-ready Task Manager featuring Supabase authentication, Server Actions, Zod validation, Row-Level Security (RLS), and a sleek modern UI with dark mode support.
 
-## Features
-
-- **Secure Email Authentication**: Register, log in, and log out using Supabase Auth. Unauthenticated users are strictly blocked and redirected from the `/dashboard` route by Next.js middleware.
-- **Full CRUD Operations**: Create tasks, toggle task completion, and delete tasks with immediate updates and cache revalidation (`revalidatePath`).
-- **Interactive Metrics Counters**: Instant visualization of Total, Completed, and Pending task states.
-- **Client-Side Filtering & Sorting**: Filter tasks by All, Completed, or Pending states. Sort by Newest, Oldest, or Alphabetical (A-Z) instantly.
-- **Real-Time Client Search**: Query tasks instantaneously through full-text searches.
-- **Validation**: Strict schema verification on both client-side and server-side Server Actions using Zod.
-- **Premium UX/UI**:
-  - Glassmorphic backdrop blur card components.
-  - Interactive micro-animations (scale-clicks, transition effects).
-  - Smooth light/dark theme switching via `next-themes`.
-  - Accessible styling (focus rings, ARIA labels, semantic markup).
-  - Beautiful, customized SVG-based Empty State and Error Boundary cards.
-
-## Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript (Strict Mode)
-- **Styling**: Tailwind CSS
-- **Database / Auth**: Supabase PostgreSQL + Auth
-- **Validation**: Zod + React Hook Form + `@hookform/resolvers`
-- **Icons**: Lucide Icons
-- **Theme Manager**: `next-themes`
-- **Radix UI Primitives**: Dialog, Checkbox, Dropdown-Menu, Separator, Label, Slot
+For **Week 13**, the project was refactored and migrated into an enterprise-grade **Monorepo Architecture**. The application is now organized into modular applications (`apps/`) and reusable shared packages (`packages/`), orchestrated via **TurboRepo** and **pnpm Workspaces**.
 
 ---
 
-## Folder Structure
+## 💡 Why Monorepo?
 
-The project has been laid out using a professional, modular structure:
+Migrating from a standalone application to a monorepo provides crucial benefits for scalability and team collaboration:
+
+1. **Shared Code & Single Source of Truth**: Reusable validation schemas and TypeScript types (like `taskSchema` and `Task`) live in `@repo/common-types` and are shared seamlessly across multiple frontends, backend services, or mobile apps without code duplication.
+2. **Atomic Commits & Refactoring**: Update schemas, types, and consuming applications simultaneously in a single pull request with complete confidence.
+3. **Optimized Build Pipelines**: TurboRepo provides intelligent caching, parallel execution, and topological dependency resolution, drastically reducing build and test times.
+4. **Centralized Dependency Management**: Manage dependencies consistently with `pnpm` workspaces, preventing version drift and reducing disk footprint via hard links.
+5. **Streamlined Developer Workflow**: Run development servers, linters, and type checkers across all applications and packages with unified root commands.
+
+---
+
+## 🏗️ Architecture & Project Structure
+
+The repository follows a clean, modular structure:
 
 ```text
-WEEK-12/
-├── app/
-│   ├── (auth)/
-│   │   ├── login/
-│   │   │   └── page.tsx           # LoginPage (Server Page)
-│   │   └── signup/
-│   │       └── page.tsx           # SignupPage (Server Page)
-│   ├── (dashboard)/
-│   │   └── dashboard/
-│   │       └── page.tsx           # DashboardPage (Server Side Fetches & Auth checks)
-│   ├── auth/
-│   │   └── callback/
-│   │       └── route.ts           # Supabase auth token exchange callback
-│   ├── globals.css                # Global Tailwind styles & Glassmorphic utilities
-│   ├── layout.tsx                 # Root layout wrapping theme & toast providers
-│   └── page.tsx                   # Index route redirecting to dashboard
-├── actions/
-│   ├── auth-actions.ts            # Server Actions: login, signup, logout
-│   └── task-actions.ts            # Server Actions: createTask, updateTask, deleteTask
-├── components/
-│   ├── forms/
-│   │   ├── login-form.tsx         # LoginForm Client Component (react-hook-form + zod)
-│   │   └── signup-form.tsx        # SignupForm Client Component (react-hook-form + zod)
-│   ├── tasks/
-│   │   ├── dashboard-client.tsx   # DashboardClient Panel (Search, filter, sort, list)
-│   │   ├── task-item.tsx          # Single task row with delete confirmation modal
-│   │   └── create-task-form.tsx   # CreateTaskForm Client Component
-│   ├── ui/
-│   │   ├── badge.tsx              # shadcn-like Badge component
-│   │   ├── button.tsx             # shadcn-like Button component (custom CVA variants)
-│   │   ├── card.tsx               # Card component with custom glassmorphism formats
-│   │   ├── checkbox.tsx           # Checkbox wrapper based on Radix Checkbox
-│   │   ├── dialog.tsx             # Dialog modals based on Radix Dialog
-│   │   ├── dropdown-menu.tsx      # Dropdown system based on Radix Dropdown
-│   │   ├── input.tsx              # Styled text fields
-│   │   ├── label.tsx              # Accessible form labels
-│   │   ├── separator.tsx          # Radix Separator lines
-│   │   ├── skeleton.tsx           # Loading Skeletons
-│   │   └── toast.tsx              # Toast Notification Context and container
-│   ├── theme-provider.tsx         # theme wrappers using next-themes
-│   └── theme-toggle.tsx           # Sun/Moon mode switcher
-├── lib/
-│   ├── supabase/
-│   │   ├── client.ts              # Supabase browser client
-│   │   ├── server.ts              # Supabase server client (Next.js 15 async cookies)
-│   │   └── middleware.ts          # Session refresh and routing protector
-│   ├── utils.ts                   # Class merge utilities (cn)
-│   └── validations.ts             # Zod input schemas (tasks, login, signup)
-├── types/
-│   └── index.ts                   # Core TypeScript type definitions
-├── middleware.ts                  # Root routing middleware
-├── supabase-schema.sql            # Local SQL instructions for Database setup
-├── .env.example                   # Local environment variable example file
-├── tailwind.config.ts             # Customized configuration defining theme colors
-└── tsconfig.json                  # Compiler variables config
+task-manager-monorepo/
+│
+├── apps/
+│   └── web/                            # Next.js 15 Web Application
+│       ├── app/                        # App Router (layouts, auth routes, dashboard)
+│       │   ├── (auth)/                 # Login & Signup pages
+│       │   ├── (dashboard)/            # Authenticated Dashboard
+│       │   ├── auth/callback/          # Supabase OAuth/email callback handler
+│       │   ├── globals.css             # Design tokens & CSS variables
+│       │   └── layout.tsx              # Root HTML & Theme Provider wrapper
+│       ├── actions/                    # Next.js Server Actions (CRUD & Auth)
+│       ├── components/                 # UI, forms, and task components
+│       │   ├── forms/                  # Login & Signup forms
+│       │   ├── tasks/                  # TaskItem, CreateTaskForm, DashboardClient
+│       │   └── ui/                     # Accessible UI components (dialog, toast, etc.)
+│       ├── lib/                        # Supabase client/server setup & utility helpers
+│       ├── public/                     # Static media & assets
+│       ├── middleware.ts               # Supabase session & route protection middleware
+│       ├── next.config.ts              # Next.js config with transpilePackages
+│       ├── package.json                # Web app dependencies & workspace link
+│       ├── tailwind.config.ts          # Tailwind CSS theme configuration
+│       └── tsconfig.json               # TypeScript configuration with path aliases
+│
+├── packages/
+│   └── common-types/                   # Shared Internal Package (@repo/common-types)
+│       ├── src/
+│       │   ├── schemas/
+│       │   │   └── task.ts             # Zod validation schema (taskSchema)
+│       │   ├── types/
+│       │   │   └── task.ts             # TypeScript interfaces (Task, CreateTaskInput, etc.)
+│       │   └── index.ts                # Public exports
+│       ├── package.json                # Package manifest
+│       └── tsconfig.json               # Strict TypeScript build configuration
+│
+├── .env.example                        # Template environment variables
+├── .gitignore                          # Workspace & artifact ignore rules
+├── package.json                        # Root package.json with TurboRepo commands
+├── pnpm-workspace.yaml                 # pnpm workspace definition (apps/*, packages/*)
+├── pnpm-lock.yaml                      # Pinned dependency lockfile
+├── supabase-schema.sql                 # Supabase SQL schema & RLS policies
+├── turbo.json                          # Turbo task orchestration pipeline
+└── README.md                           # Documentation
 ```
 
 ---
 
-## Installation
+## 🛠️ Technologies Used
 
-1. **Clone the repository** (or copy folder contents):
-   ```bash
-   cd WEEK-12
-   ```
-
-2. **Install all dependencies**:
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-   *(The `--legacy-peer-deps` flag avoids peer dependency mismatches with Next.js 15 React 19 release candidates)*
-
-3. **Configure local environment variables**:
-   Duplicate `.env.example` to `.env.local`:
-   ```bash
-   cp .env.example .env.local
-   ```
-   Add your specific Supabase parameters:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-   ```
+- **Package Management & Workspaces**: [pnpm](https://pnpm.io/)
+- **Monorepo Build System**: [TurboRepo](https://turbo.build/)
+- **Web Framework**: [Next.js 15](https://nextjs.org/) (App Router, Server Actions)
+- **Language**: [TypeScript](https://www.typescriptlang.org/) (Strict Mode)
+- **Schema Validation**: [Zod](https://zod.dev/)
+- **Database & Authentication**: [Supabase](https://supabase.com/) (PostgreSQL + Auth + RLS)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [next-themes](https://github.com/pacocoursey/next-themes) (Dark/Light mode)
+- **Icons**: [Lucide React](https://lucide.dev/)
 
 ---
 
-## Supabase Setup
+## ⚙️ Getting Started
 
-To initialize the Supabase Database backend, follow these steps:
+### Prerequisites
 
-1. Create a new project in the [Supabase Dashboard](https://supabase.com).
-2. Open the **SQL Editor** in your Supabase project dashboard.
-3. Paste the following SQL script to create the `tasks` table, configure indexes, and enforce Row-Level Security (RLS).
+- [Node.js](https://nodejs.org/) (v18.18+ or v20+)
+- [pnpm](https://pnpm.io/installation) (`npm install -g pnpm`)
 
-### SQL Schema
+### 1. Clone & Install Dependencies
+
+```bash
+git clone <repository-url>
+cd <project-folder>
+
+# Install all workspace dependencies
+pnpm install
+```
+
+### 2. Configure Environment Variables
+
+Create `.env.local` inside `apps/web/`:
+
+```bash
+cp .env.example apps/web/.env.local
+```
+
+Edit `apps/web/.env.local` and add your Supabase credentials:
+
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Optional: Public site URL for authentication redirects (defaults to http://localhost:3000)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+### 3. Database Setup
+
+Execute the provided SQL schema in your [Supabase SQL Editor](https://supabase.com/dashboard/project/_/sql):
 
 ```sql
--- Create Tasks Table
-CREATE TABLE IF NOT EXISTS public.tasks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title TEXT NOT NULL,
-    is_completed BOOLEAN DEFAULT FALSE,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- Indices for Performance Optimization
-CREATE INDEX IF NOT EXISTS tasks_user_id_idx ON public.tasks(user_id);
-CREATE INDEX IF NOT EXISTS tasks_created_at_idx ON public.tasks(created_at DESC);
-```
-
-### Row-Level Security (RLS) Policies
-
-Enable security guards so users cannot view or manipulate other users' data:
-
-```sql
--- Enable Row Level Security (RLS)
-ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
-
--- SELECT Policy: Users can only read tasks belonging to themselves
-CREATE POLICY "Users can select their own tasks"
-ON public.tasks
-FOR SELECT
-TO authenticated
-USING (auth.uid() = user_id);
-
--- INSERT Policy: Users can only add tasks linked to their own ID
-CREATE POLICY "Users can insert their own tasks"
-ON public.tasks
-FOR INSERT
-TO authenticated
-WITH CHECK (auth.uid() = user_id);
-
--- UPDATE Policy: Users can only update their own tasks
-CREATE POLICY "Users can update their own tasks"
-ON public.tasks
-FOR UPDATE
-TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
-
--- DELETE Policy: Users can only remove their own tasks
-CREATE POLICY "Users can delete their own tasks"
-ON public.tasks
-FOR DELETE
-TO authenticated
-USING (auth.uid() = user_id);
+-- Creates tasks table with RLS and user ownership policies
+-- See supabase-schema.sql for the complete script
 ```
 
 ---
 
-## Running the Project
+## 🚀 Development & Build Commands
 
-### Development Server
-Run the local next.js development process:
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+All commands can be executed from the **monorepo root**:
 
-### Build and Production Run
-To compile typescript, verify ESLint rules, and build optimized production chunks:
-```bash
-npm run build
+| Command | Action | Description |
+| :--- | :--- | :--- |
+| `pnpm dev` | `turbo dev` | Runs the Next.js development server with hot reloading |
+| `pnpm build` | `turbo build` | Builds all packages and creates optimized production web bundle |
+| `pnpm lint` | `turbo lint` | Runs ESLint across all workspace apps and packages |
+| `pnpm typecheck` | `turbo typecheck` | Type-checks all packages and Next.js app via `tsc --noEmit` |
+
+---
+
+## 📦 Shared Package Usage (`@repo/common-types`)
+
+The web application consumes `@repo/common-types` via pnpm workspace protocol:
+
+**`apps/web/package.json`**:
+```json
+{
+  "dependencies": {
+    "@repo/common-types": "workspace:*"
+  }
+}
 ```
-Launch the compiled production bundle locally:
-```bash
-npm run start
+
+**Using in Server Actions & Client Components**:
+```typescript
+import { taskSchema, type TaskFormValues, type Task } from "@repo/common-types";
+
+// Validate Server Action payload
+const result = taskSchema.safeParse(formData);
+
+// Type client component props
+export function TaskItem({ task }: { task: Task }) { ... }
 ```
 
 ---
 
-## Deployment
+## 🌐 Vercel Deployment
 
-This application is fully production-grade and ready for deployment to **Vercel** or other platforms:
+The project is fully pre-configured for seamless deployment on [Vercel](https://vercel.com/):
 
-1. Push your code to a repository (GitHub, GitLab, Bitbucket).
-2. Connect your repository to Vercel.
-3. Add the following **Environment Variables** in the Vercel project configuration:
+1. Import the repository into Vercel.
+2. In the project settings:
+   - **Root Directory**: Select `apps/web` (or leave root with Vercel's automatic monorepo detection).
+   - **Package Manager**: Select `pnpm`.
+   - **Build Command**: `cd ../.. && pnpm build --filter=web...` (or standard `pnpm build`).
+   - **Output Directory**: `.next`.
+3. Add Environment Variables:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Click **Deploy**. Vercel will build the static pages and API Server Actions automatically.
+   - `NEXT_PUBLIC_SITE_URL` (set to your production Vercel domain)
+4. Deploy!
 
 ---
 
-## Future Improvements
+## ✨ Features Preserved
 
-- **Sub-tasks / Checklists**: Add child checkbox items inside task cards for granular tracking.
-- **Task Due Dates**: Integrate calendar picking dates and visual warning badges for overdue items.
-- **Drag-and-Drop Prioritization**: Reorder tasks through interactive drag movements.
-- **Collaboration**: Share task spaces or workspaces with other signed-in users.
-
----
-
-## Screenshots
-
-Below are mockup visual representations of the application:
-
-### Light Mode Dashboard
-```
-┌────────────────────────────────────────────────────────┐
-│  TaskZen                                 user@email.com │
-├────────────────────────────────────────────────────────┤
-│ Workspace                          Thursday, July 2026 │
-│                                                        │
-│ ┌───────────────┐ ┌───────────────┐ ┌────────────────┐ │
-│ │ Total: 8      │ │ Completed: 5  │ │ Pending: 3     │ │
-│ └───────────────┘ └───────────────┘ └────────────────┘ │
-│                                                        │
-│  [ Add a new task...                      ] [+ Add]    │
-│                                                        │
-│  [ Search...   ]  [ All ] [ Completed ] [ Pending ]    │
-│                                                        │
-│  [x] Complete Next.js 15 Task Manager          [Delete]│
-│  [ ] Setup Supabase SQL Editor and Policies    [Delete]│
-│  [ ] Deploy application to Vercel              [Delete]│
-└────────────────────────────────────────────────────────┘
-```
-
-### Dark Mode (Glassmorphic Interface)
-```
-┌────────────────────────────────────────────────────────┐
-│  TaskZen (Dark Mode)                     user@email.com │
-├────────────────────────────────────────────────────────┤
-│ Workspace                                   07/30/2026 │
-│                                                        │
-│  (★) Dynamic gradients, blurred panels, glow rings.    │
-│  (★) Secure Server Actions validating Zod inputs.      │
-│  (★) Accessibility compliance with full focus frames.  │
-└────────────────────────────────────────────────────────┘
-```
+- 🔐 **Secure Authentication**: User sign up, email confirmation support, sign in, and secure logout.
+- 🛡️ **Session Protection**: Next.js middleware ensuring protected dashboard access and redirect handling.
+- 📝 **Full Task CRUD**:
+  - Create tasks with client & server-side validation.
+  - Read user-specific tasks (RLS enforced).
+  - Toggle completion status with instant feedback.
+  - Delete tasks with confirmation dialog.
+- ⚡ **Optimistic & Revalidated UI**: Automatic `revalidatePath('/dashboard')` after database mutations.
+- 🌓 **Rich UI & Themes**: Seamless dark and light themes, search filter, sort controls, and responsive layout.

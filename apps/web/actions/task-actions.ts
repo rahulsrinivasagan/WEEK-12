@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { taskSchema } from '@/lib/validations'
+import { taskSchema } from '@repo/common-types'
 import { revalidatePath } from 'next/cache'
 
 export async function createTask(formData: unknown) {
